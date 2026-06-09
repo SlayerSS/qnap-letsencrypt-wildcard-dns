@@ -40,20 +40,28 @@ chmod +x acme.sh
 
 ## 2. Первый выпуск сертификата
 
-API-ключи указываются **один раз**. acme.sh сохранит их сам — в скрипт их прописывать не нужно.
+Важно различать два понятия:
 
-1. Найдите код вашего DNS API в [wiki acme.sh](https://github.com/acmesh-official/acme.sh/wiki/dnsapi) (например, `dns_cloudflare`, `dns_yandex`, `dns_reg_ru`).
-2. Экспортируйте переменные окружения согласно документации провайдера.
+| Что | Куда | Пример |
+|-----|------|--------|
+| **Код DNS API** | В `renew_ssl.sh` → `DNS_API` | `dns_webnames`, `dns_cloudflare` |
+| **Секреты (токен, пароль)** | Только при первом `--issue` вручную | `export WEBNAMES_Token="..."` |
+
+Секреты в скрипт **не прописываются** — acme.sh сохранит их сам после первого выпуска.  
+Но **код провайдера** (`DNS_API`) в `renew_ssl.sh` **обязателен** — без него скрипт не запустится.
+
+1. Найдите код вашего DNS API в [wiki acme.sh](https://github.com/acmesh-official/acme.sh/wiki/dnsapi).
+2. Экспортируйте переменные с токенами согласно документации провайдера.
 3. Выпустите сертификат:
 
 ```bash
 cd /share/CACHEDEV1_DATA/homes/admin/acme
 
-# переменные API — по документации вашего провайдера
+# секреты — только здесь, один раз (по документации провайдера)
 export YOUR_PROVIDER_VAR="..."
 
 DNSAPI_PATH=./dnsapi ./acme.sh --issue \
-  --dns dns_your_provider \
+  --dns dns_webnames \
   -d example.com \
   -d '*.example.com' \
   --server letsencrypt \
@@ -79,14 +87,16 @@ chmod +x /share/CACHEDEV1_DATA/homes/admin/acme/renew_ssl.sh
 vi /share/CACHEDEV1_DATA/homes/admin/acme/renew_ssl.sh
 ```
 
-Измените в начале файла:
+Измените в начале файла (значение `dns_your_provider` — заглушка, замените на свой код):
 
-| Переменная | Пример |
-|------------|--------|
-| `DOMAIN` | `example.com` |
-| `QNAP_ADMIN_USER` | `admin` |
-| `QNAP_DATA_VOLUME` | `/share/CACHEDEV1_DATA` |
-| `DNS_API` | `dns_your_provider` |
+| Переменная | Пример | Обязательно |
+|------------|--------|-------------|
+| `DOMAIN` | `example.com` | да |
+| `QNAP_ADMIN_USER` | `admin` | да |
+| `QNAP_DATA_VOLUME` | `/share/CACHEDEV1_DATA` | да |
+| `DNS_API` | `dns_webnames` | да — код провайдера, не токен |
+
+Токены и пароли API в скрипт **не вносятся** — acme.sh подтянет их из сохранённой конфигурации.
 
 Проверка:
 
