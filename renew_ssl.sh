@@ -83,6 +83,9 @@ check_prerequisites() {
     [[ -x "${ACME_SH}" ]] || die "acme.sh не найден: ${ACME_SH}"
     id "${QNAP_ADMIN_USER}" &>/dev/null || die "Пользователь не существует: ${QNAP_ADMIN_USER}"
 
+    [[ "${DNS_API}" != "dns_your_provider" ]] || die \
+        "Укажите DNS_API в настройках скрипта (например, dns_webnames)"
+
     resolve_cert_dir || die \
         "Каталог сертификата не найден (${ACME_CERT_GLOB}). " \
         "Сначала выпустите сертификат вручную (см. README.md)."
@@ -118,6 +121,29 @@ backup_stunnel_files() {
     done
 }
 
+find_cert_key() {
+    local f
+    for f in *."${DOMAIN}.key" *.key; do
+        [[ -f "${f}" ]] || continue
+        echo "${f}"
+        return 0
+    done
+    return 1
+}
+
+find_cert_cer() {
+    local f
+    for f in *."${DOMAIN}.cer" *.cer; do
+        [[ -f "${f}" ]] || continue
+        case "${f}" in
+            ca.cer|fullchain.cer) continue ;;
+        esac
+        echo "${f}"
+        return 0
+    done
+    return 1
+}
+
 deploy_to_qnap() {
     local key_file
     local cert_file
@@ -125,21 +151,13 @@ deploy_to_qnap() {
     local tmp_pem
     local tmp_uca
 
+    log "INFO" "Установка сертификата в stunnel из ${ACME_CERT_DIR}..."
+
     cd "${ACME_CERT_DIR}"
 
-    key_file=$(ls *."${DOMAIN}.key" 2>/dev/null | head -n 1)
-    if [[ -z "${key_file}" ]]; then
-        key_file=$(ls *.key 2>/dev/null | head -n 1)
-    fi
-
-    cert_file=$(ls *."${DOMAIN}.cer" 2>/dev/null | head -n 1)
-    if [[ -z "${cert_file}" ]]; then
-        cert_file=$(ls *.cer 2>/dev/null | grep -v "ca.cer" | grep -v "fullchain.cer" | head -n 1)
-    fi
+    key_file=$(find_cert_key) || die "Приватный ключ не найден в ${ACME_CERT_DIR}"
+    cert_file=$(find_cert_cer) || die "Сертификат не найден в ${ACME_CERT_DIR}"
     ca_file="ca.cer"
-
-    [[ -n "${key_file}" && -f "${key_file}" ]] || die "Приватный ключ не найден в ${ACME_CERT_DIR}"
-    [[ -n "${cert_file}" && -f "${cert_file}" ]] || die "Сертификат не найден в ${ACME_CERT_DIR}"
 
     tmp_pem="$(mktemp)"
     tmp_uca="$(mktemp)"
