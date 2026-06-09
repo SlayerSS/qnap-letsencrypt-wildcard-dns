@@ -42,18 +42,15 @@ chmod +x acme.sh
 
 API-ключи указываются **один раз**. acme.sh сохранит их сам — в скрипт их прописывать не нужно.
 
-**Webnames.ru**
+**Webnames.ru** (`dns_webnames`):
 
-Домен должен быть делегирован на DNS Webnames (`ns1.nameself.com`, `ns2.nameself.com`).
-
-API-ключ берётся в личном кабинете: **Мои домены** → **Управление доменом** → **Управление зоной** → **Настройка Certbot** (внизу страницы). Тот же ключ используется в [официальной инструкции Webnames для Certbot](https://www.webnames.ru/scripts/domain_nss.pl?id=4330) и плагине [certbot-dns-webnames](https://github.com/regtime-ltd/certbot-dns-webnames).
-
-На QNAP вместо Certbot используется **acme.sh** с модулем `dns_webnames` — API-ключ и логин те же:
+API-ключ и логин — в личном кабинете: **Мои домены** → **Управление доменом** → **Управление зоной** → **Настройка Certbot** (внизу страницы).  
+Для Certbot есть отдельный плагин: [certbot-dns-webnames](https://github.com/regtime-ltd/certbot-dns-webnames).
 
 ```bash
 cd /share/CACHEDEV1_DATA/homes/admin/acme
-export WEBNAMES_Token="ваш_apikey_из_кабинета"
-export WEBNAMES_Username="ваш_логин_webnames"
+export WEBNAMES_Token="ВАШ_ТОКЕН"
+export WEBNAMES_Username="ВАШ_ЛОГИН"
 
 DNSAPI_PATH=./dnsapi ./acme.sh --issue \
   --dns dns_webnames \
@@ -62,8 +59,6 @@ DNSAPI_PATH=./dnsapi ./acme.sh --issue \
   --server letsencrypt \
   --home .
 ```
-
-В `renew_ssl.sh` укажите `DNS_API="dns_webnames"`.
 
 **Cloudflare:**
 
@@ -165,8 +160,7 @@ cat /var/log/renew_ssl.log
 ## Ссылки
 
 - [acme.sh](https://github.com/acmesh-official/acme.sh)
-- [DNS API провайдеры acme.sh](https://github.com/acmesh-official/acme.sh/wiki/dnsapi)
-- [Webnames — настройка Certbot (получение API-ключа)](https://www.webnames.ru/scripts/domain_nss.pl?id=4330)
-- [certbot-dns-webnames](https://github.com/regtime-ltd/certbot-dns-webnames) — альтернатива через Certbot (не для QNAP)
+- [DNS API провайдеры](https://github.com/acmesh-official/acme.sh/wiki/dnsapi)
+- [Webnames.ru — certbot-dns-webnames](https://github.com/regtime-ltd/certbot-dns-webnames)
 
 Лицензия: [MIT](LICENSE)
