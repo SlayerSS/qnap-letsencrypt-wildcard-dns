@@ -123,16 +123,16 @@ backup_stunnel_files() {
 }
 
 deploy_to_qnap() {
-    local key_file cert_file ca_file
-    local tmp_pem tmp_uca
+    local key_file
+    local cert_file
+    local ca_file
+    local tmp_pem
+    local tmp_uca
 
     cd "${ACME_CERT_DIR}"
 
     key_file=$(ls *.key 2>/dev/null | head -n 1)
-    cert_file=$(ls \*.${DOMAIN}.cer 2>/dev/null | head -n 1)
-    if [[ -z "${cert_file}" ]]; then
-        cert_file=$(ls *.cer 2>/dev/null | grep -v ca.cer | grep -v fullchain.cer | head -n 1)
-    fi
+    cert_file=$(ls *.cer 2>/dev/null | grep -v ca.cer | grep -v fullchain.cer | head -n 1)
     ca_file="ca.cer"
 
     [[ -n "${key_file}" && -f "${key_file}" ]] || die "Приватный ключ не найден в ${ACME_CERT_DIR}"

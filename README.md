@@ -71,6 +71,8 @@
 | 6 | **Пути QNAP** — `/share/homes/` — симлинк на `CACHEDEV*_DATA` | Явное указание `QNAP_DATA_VOLUME` |
 | 7 | **Rate limit** — `--force` в Cron вызывает бан LE | `--issue` без `--force` |
 | 8 | **Wildcard в путях** — `*` в имени папки ломает `[[ -d ... ]]` | Glob-маска + `ACME_CERT_DIR` |
+| 9 | **BusyBox на QTS** — `install -o root` даёт `unknown user root` | Используется `cp` + `chmod` вместо `install` |
+| 10 | **`set -u` + `trap RETURN`** — `tmp_pem: unbound variable` на выходе из функции | Явный `rm -f` в конце функции, без `trap` |
 
 ---
 
@@ -201,10 +203,16 @@ tail -30 /var/log/renew_ssl.log
 vi /etc/config/crontab
 ```
 
-Добавьте строку:
+Добавьте строку (скопируйте как есть, без экранирования звёздочек):
 
 ```cron
 15 3 * * * /share/CACHEDEV1_DATA/homes/admin/acme/renew_ssl.sh >> /var/log/renew_ssl.log 2>&1
+```
+
+Еженедельная проверка (воскресенье, 03:15):
+
+```cron
+15 3 * * 0 /share/CACHEDEV1_DATA/homes/admin/acme/renew_ssl.sh >> /var/log/renew_ssl.log 2>&1
 ```
 
 Примените:
@@ -234,7 +242,8 @@ crontab -l
 |---------|---------|
 | «It seems that you are using sudo...» | acme.sh только через `sudo -u admin` |
 | Каталог сертификата не найден | Выполните первичный `--issue`, проверьте `*.domain_ecc` |
-| `tmp_pem: unbound variable` | Не используйте `trap RETURN` с `set -u`; см. актуальный `renew_ssl.sh` |
+| `tmp_pem: unbound variable` | Не используйте `trap RETURN` с `set -u`; в скрипте cleanup через `rm -f` |
+| `install: unknown user root` | На QTS BusyBox не поддерживает `install -o root`; используйте `cp` + `chmod` |
 | Rate limit LE | Уберите `--force` из Cron |
 | Cron пропал после reboot | Задача в `/etc/config/crontab` |
 
