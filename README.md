@@ -44,8 +44,24 @@ API-ключи указываются **один раз**. acme.sh сохран�
 
 **Webnames.ru** (`dns_webnames`):
 
-API-ключ и логин — в личном кабинете: **Мои домены** → **Управление доменом** → **Управление зоной** → **Настройка Certbot** (внизу страницы).  
-Для Certbot есть отдельный плагин: [certbot-dns-webnames](https://github.com/regtime-ltd/certbot-dns-webnames).
+API-ключ — в личном кабинете: **Мои домены** → **Управление доменом** → **Управление зоной** → **Настройка Certbot** (внизу страницы).  
+Плагин Webnames для Certbot: [certbot-dns-webnames](https://github.com/regtime-ltd/certbot-dns-webnames).
+
+Подготовка окружения Webnames (по инструкции в кабинете):
+
+```bash
+sudo apt-get install certbot
+mkdir letsencrypt_certbot
+cd letsencrypt_certbot
+git clone https://github.com/certbot/certbot
+git clone https://github.com/regtime-ltd/certbot-dns-webnames
+
+# config.sh — скачать из раздела «Настройка Certbot» (подставьте свой домен и apikey)
+curl -k "https://www.webnames.ru/scripts/json_domain_zone_manager.pl?action=get_config_certbot&domain=example.com&apikey=ВАШ_API_KEY" \
+  -o certbot-dns-webnames/config.sh
+```
+
+Дальше — выпуск через **acme.sh** (им пользуется `renew_ssl.sh`):
 
 ```bash
 cd /share/CACHEDEV1_DATA/homes/admin/acme
