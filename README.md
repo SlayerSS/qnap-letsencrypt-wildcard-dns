@@ -4,7 +4,7 @@
 
 Встроенный мастер сертификатов QTS не выпускает Wildcard. Это решение подтверждает домен через DNS API — порты 80/443 открывать не нужно.
 
-Проверено на **QTS 5.2.9.3499** с DNS-провайдером [Webnames.ru](https://www.webnames.ru).
+Проверено на **QTS 5.2.9.3499**.
 
 ---
 
@@ -42,55 +42,23 @@ chmod +x acme.sh
 
 API-ключи указываются **один раз**. acme.sh сохранит их сам — в скрипт их прописывать не нужно.
 
-**Webnames.ru** (`dns_webnames`):
-
-API-ключ — в личном кабинете: **Мои домены** → **Управление доменом** → **Управление зоной** → **Настройка Certbot** (внизу страницы).  
-Плагин Webnames для Certbot: [certbot-dns-webnames](https://github.com/regtime-ltd/certbot-dns-webnames).
-
-Подготовка окружения Webnames (по инструкции в кабинете):
-
-```bash
-sudo apt-get install certbot
-mkdir letsencrypt_certbot
-cd letsencrypt_certbot
-git clone https://github.com/certbot/certbot
-git clone https://github.com/regtime-ltd/certbot-dns-webnames
-
-# config.sh — скачать из раздела «Настройка Certbot» (подставьте свой домен и apikey)
-curl -k "https://www.webnames.ru/scripts/json_domain_zone_manager.pl?action=get_config_certbot&domain=example.com&apikey=ВАШ_API_KEY" \
-  -o certbot-dns-webnames/config.sh
-```
-
-Дальше — выпуск через **acme.sh** (им пользуется `renew_ssl.sh`):
+1. Найдите код вашего DNS API в [wiki acme.sh](https://github.com/acmesh-official/acme.sh/wiki/dnsapi) (например, `dns_cloudflare`, `dns_yandex`, `dns_reg_ru`).
+2. Экспортируйте переменные окружения согласно документации провайдера.
+3. Выпустите сертификат:
 
 ```bash
 cd /share/CACHEDEV1_DATA/homes/admin/acme
-export WEBNAMES_Token="ВАШ_ТОКЕН"
-export WEBNAMES_Username="ВАШ_ЛОГИН"
+
+# переменные API — по документации вашего провайдера
+export YOUR_PROVIDER_VAR="..."
 
 DNSAPI_PATH=./dnsapi ./acme.sh --issue \
-  --dns dns_webnames \
+  --dns dns_your_provider \
   -d example.com \
   -d '*.example.com' \
   --server letsencrypt \
   --home .
 ```
-
-**Cloudflare:**
-
-```bash
-cd /share/CACHEDEV1_DATA/homes/admin/acme
-export CF_Token="ваш_токен"
-
-DNSAPI_PATH=./dnsapi ./acme.sh --issue \
-  --dns dns_cloudflare \
-  -d example.com \
-  -d '*.example.com' \
-  --server letsencrypt \
-  --home .
-```
-
-Другой провайдер — замените `dns_webnames` на код из [wiki acme.sh](https://github.com/acmesh-official/acme.sh/wiki/dnsapi).
 
 Проверка:
 
@@ -118,7 +86,7 @@ vi /share/CACHEDEV1_DATA/homes/admin/acme/renew_ssl.sh
 | `DOMAIN` | `example.com` |
 | `QNAP_ADMIN_USER` | `admin` |
 | `QNAP_DATA_VOLUME` | `/share/CACHEDEV1_DATA` |
-| `DNS_API` | `dns_webnames` |
+| `DNS_API` | `dns_your_provider` |
 
 Проверка:
 
@@ -177,6 +145,43 @@ cat /var/log/renew_ssl.log
 
 - [acme.sh](https://github.com/acmesh-official/acme.sh)
 - [DNS API провайдеры](https://github.com/acmesh-official/acme.sh/wiki/dnsapi)
-- [Webnames.ru — certbot-dns-webnames](https://github.com/regtime-ltd/certbot-dns-webnames)
 
 Лицензия: [MIT](LICENSE)
+
+---
+
+## Сноска: тестирование с Webnames.ru
+
+> Автор проверял решение с DNS-провайдером [Webnames.ru](https://www.webnames.ru).  
+> Для других регистраторов шаги 1–4 выше остаются теми же — меняются только код DNS API и переменные окружения.
+
+API-ключ Webnames: **Мои домены** → **Управление доменом** → **Управление зоной** → **Настройка Certbot**.  
+Плагин для Certbot: [certbot-dns-webnames](https://github.com/regtime-ltd/certbot-dns-webnames).
+
+Подготовка по инструкции Webnames:
+
+```bash
+sudo apt-get install certbot
+mkdir letsencrypt_certbot
+cd letsencrypt_certbot
+git clone https://github.com/certbot/certbot
+git clone https://github.com/regtime-ltd/certbot-dns-webnames
+
+curl -k "https://www.webnames.ru/scripts/json_domain_zone_manager.pl?action=get_config_certbot&domain=example.com&apikey=ВАШ_API_KEY" \
+  -o certbot-dns-webnames/config.sh
+```
+
+Выпуск через acme.sh (в `renew_ssl.sh` указать `DNS_API="dns_webnames"`):
+
+```bash
+cd /share/CACHEDEV1_DATA/homes/admin/acme
+export WEBNAMES_Token="ВАШ_ТОКЕН"
+export WEBNAMES_Username="ВАШ_ЛОГИН"
+
+DNSAPI_PATH=./dnsapi ./acme.sh --issue \
+  --dns dns_webnames \
+  -d example.com \
+  -d '*.example.com' \
+  --server letsencrypt \
+  --home .
+```
