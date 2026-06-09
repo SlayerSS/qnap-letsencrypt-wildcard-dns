@@ -127,8 +127,15 @@ deploy_to_qnap() {
 
     cd "${ACME_CERT_DIR}"
 
-    key_file=$(ls *.key 2>/dev/null | head -n 1)
-    cert_file=$(ls *.cer 2>/dev/null | grep -v ca.cer | grep -v fullchain.cer | head -n 1)
+    key_file=$(ls *."${DOMAIN}.key" 2>/dev/null | head -n 1)
+    if [[ -z "${key_file}" ]]; then
+        key_file=$(ls *.key 2>/dev/null | head -n 1)
+    fi
+
+    cert_file=$(ls *."${DOMAIN}.cer" 2>/dev/null | head -n 1)
+    if [[ -z "${cert_file}" ]]; then
+        cert_file=$(ls *.cer 2>/dev/null | grep -v "ca.cer" | grep -v "fullchain.cer" | head -n 1)
+    fi
     ca_file="ca.cer"
 
     [[ -n "${key_file}" && -f "${key_file}" ]] || die "Приватный ключ не найден в ${ACME_CERT_DIR}"
