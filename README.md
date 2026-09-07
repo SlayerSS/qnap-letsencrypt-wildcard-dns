@@ -106,7 +106,8 @@ crontab /etc/config/crontab
 | `Каталог сертификата не найден` | Сначала шаг 2 (`--issue`) |
 | `is not an issued domain` | Вызывайте acme.sh с `--home` и `--config-home` на каталог установки, плюс `--ecc` |
 | `No TXT record found at _acme-challenge` | Увеличьте `DNS_SLEEP` (120–180) |
-| `acme.sh завершился с кодом` | Обновление не удалось; stunnel не трогали — смотрите `/var/log/renew_ssl.log` |
+| `acme.sh завершился с кодом 2` / `Skipping. Next renewal time` | Это не ошибка: обновлять ещё рано. В актуальном скрипте код 2 = тихий выход без перезапуска служб |
+| `acme.sh завершился с кодом` (не 0 и не 2) | Обновление не удалось; stunnel не трогали — смотрите `/var/log/renew_ssl.log` |
 | `It seems that you are using sudo` | Запускайте скрипт от root, не acme.sh напрямую |
 | Cron пропал после reboot | Задача в `/etc/config/crontab` |
 

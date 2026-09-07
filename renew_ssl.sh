@@ -103,7 +103,7 @@ run_acme_renew() {
 
     log "INFO" "Запуск проверки/обновления сертификата для *.${DOMAIN} (DNS API: ${DNS_API})..."
 
-    # --renew без --force: если срок не подошёл, acme.sh выходит 0 и ничего не запрашивает.
+    # --renew без --force. Коды acme.sh: 0 — обновлено, 2 — ещё рано (skip).
     # Абсолютный --home/--config-home: sudo -u подменяет HOME, относительный "." легко теряется.
     cd "${ACME_BASE_DIR}"
     sudo -u "${QNAP_ADMIN_USER}" DNSAPI_PATH="./dnsapi" "${ACME_SH}" --renew \
@@ -116,11 +116,18 @@ run_acme_renew() {
         --dnssleep "${DNS_SLEEP}" \
         >> "${LOG_FILE}" 2>&1 || acme_rc=$?
 
-    if [[ "${acme_rc}" -ne 0 ]]; then
-        die "acme.sh завершился с кодом ${acme_rc}. Сертификат не установлен, службы не перезапускались."
-    fi
-
-    log "INFO" "Проверка acme.sh завершена."
+    case "${acme_rc}" in
+        0)
+            log "INFO" "Проверка acme.sh завершена."
+            ;;
+        2)
+            log "INFO" "Сертификат ещё не требует обновления. Службы не перезапускались."
+            exit 0
+            ;;
+        *)
+            die "acme.sh завершился с кодом ${acme_rc}. Сертификат не установлен, службы не перезапускались."
+            ;;
+    esac
 }
 
 backup_stunnel_files() {
