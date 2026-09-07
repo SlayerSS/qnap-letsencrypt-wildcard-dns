@@ -34,10 +34,13 @@ export YOUR_PROVIDER_VAR="..."
 
 DNSAPI_PATH=./dnsapi ./acme.sh --issue \
   --dns dns_your_provider \
-  -d example.com \
+  --ecc \
   -d '*.example.com' \
+  -d example.com \
   --server letsencrypt \
-  --home .
+  --home /share/CACHEDEV1_DATA/homes/admin/acme \
+  --config-home /share/CACHEDEV1_DATA/homes/admin/acme \
+  --dnssleep 120
 ```
 
 ### 3. Скачайте и настройте скрипт
@@ -60,6 +63,7 @@ vi renew_ssl.sh
 | `QNAP_ADMIN_USER` | `admin` |
 | `QNAP_DATA_VOLUME` | `/share/CACHEDEV1_DATA` |
 | `DNS_API` | `dns_webnames` |
+| `DNS_SLEEP` | `120` (увеличьте до `180`, если LE не видит TXT) |
 
 `DNS_API` — **код провайдера** (не токен). Заглушка `dns_your_provider` не сработает.
 
@@ -100,6 +104,9 @@ crontab /etc/config/crontab
 |--------|---------|
 | `Укажите DNS_API` | Замените `dns_your_provider` на код провайдера |
 | `Каталог сертификата не найден` | Сначала шаг 2 (`--issue`) |
+| `is not an issued domain` | Вызывайте acme.sh с `--home` и `--config-home` на каталог установки, плюс `--ecc` |
+| `No TXT record found at _acme-challenge` | Увеличьте `DNS_SLEEP` (120–180) |
+| `acme.sh завершился с кодом` | Обновление не удалось; stunnel не трогали — смотрите `/var/log/renew_ssl.log` |
 | `It seems that you are using sudo` | Запускайте скрипт от root, не acme.sh напрямую |
 | Cron пропал после reboot | Задача в `/etc/config/crontab` |
 
@@ -116,8 +123,12 @@ export WEBNAMES_Username="ВАШ_ЛОГИН"
 
 DNSAPI_PATH=./dnsapi ./acme.sh --issue \
   --dns dns_webnames \
-  -d example.com -d '*.example.com' \
-  --server letsencrypt --home .
+  --ecc \
+  -d '*.example.com' -d example.com \
+  --server letsencrypt \
+  --home /share/CACHEDEV1_DATA/homes/admin/acme \
+  --config-home /share/CACHEDEV1_DATA/homes/admin/acme \
+  --dnssleep 120
 ```
 
 ---

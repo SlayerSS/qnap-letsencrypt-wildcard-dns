@@ -27,6 +27,9 @@ ACME_SH="${ACME_BASE_DIR}/acme.sh"
 # DNS API: https://github.com/acmesh-official/acme.sh/wiki/dnsapi
 DNS_API="dns_your_provider"
 
+# Пауза после TXT, пока запись не разойдётся по NS провайдера (Webnames: 120–180)
+DNS_SLEEP=120
+
 # Папка сертификата acme.sh (суффикс _ecc)
 ACME_CERT_GLOB="${ACME_BASE_DIR}/*.${DOMAIN}_ecc"
 
@@ -96,17 +99,26 @@ check_prerequisites() {
 }
 
 run_acme_renew() {
+    local acme_rc=0
+
     log "INFO" "Запуск проверки/обновления сертификата для *.${DOMAIN} (DNS API: ${DNS_API})..."
 
-    # acme.sh — только от имени администратора; --issue без --force
+    # --renew без --force: если срок не подошёл, acme.sh выходит 0 и ничего не запрашивает.
+    # Абсолютный --home/--config-home: sudo -u подменяет HOME, относительный "." легко теряется.
     cd "${ACME_BASE_DIR}"
-    sudo -u "${QNAP_ADMIN_USER}" DNSAPI_PATH="./dnsapi" "${ACME_SH}" --issue \
+    sudo -u "${QNAP_ADMIN_USER}" DNSAPI_PATH="./dnsapi" "${ACME_SH}" --renew \
+        --ecc \
         --dns "${DNS_API}" \
-        -d "${DOMAIN}" \
         -d "*.${DOMAIN}" \
         --server letsencrypt \
-        --home . \
-        >> "${LOG_FILE}" 2>&1 || true
+        --home "${ACME_BASE_DIR}" \
+        --config-home "${ACME_BASE_DIR}" \
+        --dnssleep "${DNS_SLEEP}" \
+        >> "${LOG_FILE}" 2>&1 || acme_rc=$?
+
+    if [[ "${acme_rc}" -ne 0 ]]; then
+        die "acme.sh завершился с кодом ${acme_rc}. Сертификат не установлен, службы не перезапускались."
+    fi
 
     log "INFO" "Проверка acme.sh завершена."
 }
